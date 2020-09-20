@@ -4,9 +4,13 @@
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_primitives.h>
+#include <signal.h>
 
 #define KEY_SEEN 1
 #define KEY_RELEASED 2
+#define TIMER 10 // seconds timer
+
+volatile bool end = false;
 
 typedef struct player {
     float x;
@@ -43,7 +47,7 @@ void redraw_points(points* points) {
 
     points->x = 1 + rand() % 630;
     points->y = 1 + rand() % 470;
-    al_draw_filled_rectangle(points->x, points->y, points->x + 10, points->y + 10, al_map_rgba_f(0, 0, 0.5, 0.5));
+    al_draw_filled_rectangle(points->x, points->y, points->x + 10, points->y + 10, al_map_rgb(255, 255, 0));
 
 }
 
@@ -56,6 +60,10 @@ void check_player_position(player* player) {
         player->x = 640 - 20;
     if(player->y < 0)
         player->y = 480 - 20;
+}
+
+void end_game() {
+    end = true;
 }
 
 int main() {
@@ -112,10 +120,12 @@ int main() {
     // init
     points.x = 120;
     points.y = 120;
-    al_draw_filled_rectangle(points.x, points.y, points.x + 10, points.y + 10, al_map_rgba_f(0, 0, 0.5, 0.5));
+    al_draw_filled_rectangle(points.x, points.y, points.x + 10, points.y + 10, al_map_rgb(255, 255, 0));
 
+    signal(SIGALRM, end_game);
+    alarm(TIMER);
 
-    while(1) {
+    while(!end) {
 
         al_wait_for_event(queue, &event); 
 
@@ -171,7 +181,7 @@ int main() {
             al_clear_to_color(al_map_rgb(0,0,0));
             al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "X: %.1f Y: %.1f POINTS:%.1f TIMER:%f", player.x, player.y,player.points,al_get_time());
             al_draw_filled_rectangle(player.x, player.y, player.x +20, player.y + 20, al_map_rgb(255, 0, 0));
-            al_draw_filled_rectangle(points.x, points.y, points.x + 10, points.y + 10, al_map_rgba_f(0, 0, 0.5, 0.5));
+            al_draw_filled_rectangle(points.x, points.y, points.x + 10, points.y + 10, al_map_rgb(255, 255, 0));
 
             al_flip_display();
 
@@ -180,8 +190,39 @@ int main() {
 
     }
 
-    al_destroy_font(font);
+    // done = false;
+    // al_flush_event_queue(queue);
+
+    // ALLEGRO_EVENT_QUEUE* queue_2 = al_create_event_queue();
+    // init(queue_2, "queue");
+
+    // al_register_event_source(queue_2, al_get_keyboard_event_source());
+    // al_register_event_source(queue_2, al_get_display_event_source(disp));
+    // al_register_event_source(queue_2, al_get_timer_event_source(timer));
+    // while(1) {
+    //     al_wait_for_event(queue_2, &event); 
+    //     switch(event.type) {
+    //         case ALLEGRO_EVENT_TIMER:
+    //             if(key[ALLEGRO_KEY_ESCAPE])
+    //                 done = true;
+    //             break;
+    //         case ALLEGRO_EVENT_DISPLAY_CLOSE:
+    //             done = true;
+    //             break;
+    //     }
+    //     if(done) break;
+
+    //     if(al_is_event_queue_empty(queue_2)) {
+    //         al_clear_to_color(al_map_rgb(0,0,0));
+    //         al_draw_textf(font, al_map_rgb(255,255,255),320,240,0, "END GAME. TOTAL POINTS : %.1f \n PRESS ANY KET TO QUIT", player.points);
+    //     }
+
+
+    // }
+
+
     al_destroy_display(disp);
+    al_destroy_font(font);
     al_destroy_timer(timer);
     al_destroy_event_queue(queue);
 
